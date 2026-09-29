@@ -26,7 +26,7 @@ def test_create_lands_body_sidecar_led(tmp_path):
     v = promoter.promote(_create(), roots=roots)
     assert v["ok"] and v["level"] == "project"
     root = roots["project"]
-    assert skill_store.read_body("project", "foo", root) == GOOD_BODY
+    assert skill_store.read_body("project", "foo", root) == promoter._stamp_created_by(GOOD_BODY)
     assert sidecar.is_agent_created("project", "foo", root)
     assert sidecar.read("project", "foo", root)["anchor"] == 7  # anchor = layer request count at land time
     led = ledger.read("project", "foo", root)
@@ -98,6 +98,25 @@ def test_update_requires_agent_created(tmp_path):
     sidecar.create("project", "foo", 0, root)  # editable once stamped self-produced
     v2 = promoter.promote(intent, roots=roots)
     assert v2["ok"] and "isoformat" in skill_store.read_body("project", "foo", root)
+
+
+def _created_by_lines(body):
+    return [line for line in body.splitlines() if line == promoter.CREATED_BY_MARKER]
+
+
+def test_landed_skill_is_stamped_created_by_once_across_create_and_update(tmp_path):
+    roots = _roots(tmp_path)
+    root = roots["project"]
+    assert promoter.promote(_create(), roots=roots)["ok"]
+    created = skill_store.read_body("project", "foo", root)
+    assert created.startswith("---\nname: foo\ndescription: Use when formatting a date as ISO.\n"
+                              "created-by: autoharness\n---\n")
+    assert promoter.promote({"action": "update", "name": "foo", "body": created + "More.\n",
+                             "reason": "r", "evidence": "e"}, roots=roots)["ok"]
+    assert len(_created_by_lines(skill_store.read_body("project", "foo", root))) == 1
+    assert promoter.promote({"action": "update", "name": "foo", "body": GOOD_BODY,
+                             "reason": "r", "evidence": "e"}, roots=roots)["ok"]
+    assert len(_created_by_lines(skill_store.read_body("project", "foo", root))) == 1
 
 
 def test_patch_rebuilds_from_live(tmp_path):
@@ -197,7 +216,7 @@ def test_create_with_files_lands_subfiles(tmp_path):
     v = promoter.promote(intent, roots=roots)
     assert v["ok"], v["findings"]
     assert (_sdir(roots) / "scripts" / "run.sh").read_text() == "echo hi\n"
-    assert skill_store.read_body("project", "foo", roots["project"]) == FILES_BODY
+    assert skill_store.read_body("project", "foo", roots["project"]) == promoter._stamp_created_by(FILES_BODY)
 
 
 def test_led_evidence_is_pointer_to_materialized_slice(tmp_path):

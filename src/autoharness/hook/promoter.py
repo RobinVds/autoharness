@@ -43,6 +43,7 @@ from autoharness.lib import (
 )
 
 _MODIFY = ("update", "patch", "remove_file", "delete")
+CREATED_BY_MARKER = "created-by: autoharness"
 
 
 def _reject(action, level, findings):
@@ -118,6 +119,15 @@ def _remove_subfile(level, name, rel, root):
         p.unlink()
 
 
+def _stamp_created_by(body):
+    """Mark every landed SKILL.md in its frontmatter, so the skills this plugin wrote can be found (and
+    removed in bulk) with a plain grep, without knowing about the hidden sidecar."""
+    m = validate._FRONTMATTER.match(body)
+    if not m or CREATED_BY_MARKER in m.group(1).splitlines():
+        return body
+    return f"---\n{m.group(1)}\n{CREATED_BY_MARKER}\n---\n{body[m.end():]}"
+
+
 def _land(action, intent, body, level, name, root):
     if action == "delete":
         evidence_ref = _materialize_evidence(level, name, intent.get("evidence"), root)
@@ -131,7 +141,7 @@ def _land(action, intent, body, level, name, root):
         return
     _land_files(level, name, intent.get("files"), root)
     evidence_ref = _materialize_evidence(level, name, intent.get("evidence"), root)
-    skill_store.write_body(level, name, body, root)
+    skill_store.write_body(level, name, _stamp_created_by(body), root)
     if action == "create":
         existing = sidecar.read(level, name, root)
         if not existing:

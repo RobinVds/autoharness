@@ -82,9 +82,15 @@ claude plugin marketplace remove autoharness
 
 Uninstalling only stops it from running — the skills it landed and its own state live **outside** the
 plugin and stay on disk. To clear those too, delete its state dir (`~/.claude/autoharness/` global,
-`<repo>/.claude/autoharness/` per project) and the self-authored skills under `.claude/skills/` (each
-carries a `self-authored` ledger marker, so they're easy to tell from yours). Your own skills are
-never touched.
+`<repo>/.claude/autoharness/` per project) and the self-authored skills under `.claude/skills/`. Each
+one carries `created-by: autoharness` in its `SKILL.md` frontmatter, so they're easy to tell from
+yours. Your own skills are never touched.
+
+```
+grep -lx 'created-by: autoharness' ~/.claude/skills/*/SKILL.md          # list them
+grep -lx 'created-by: autoharness' ~/.claude/skills/*/SKILL.md \
+  | xargs -n1 dirname | xargs rm -rf                                     # remove them
+```
 
 ## Configuration
 
