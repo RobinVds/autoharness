@@ -221,10 +221,10 @@ def test_system_fake_reflector_cross_process_lands(tmp_path, monkeypatch):
                          claude_bin=str(script), spec_path=config.FORMAT_SPEC)
 
     assert [v["ok"] for v in verdicts] == [True]
-    root = roots["project"]
-    assert skill_store.read_body("project", "learned", root) is not None
-    assert sidecar.is_agent_created("project", "learned", root)
-    led = ledger.read("project", "learned", root)
+    root = roots["global"]
+    assert skill_store.read_body("global", "learned", root) is not None
+    assert sidecar.is_agent_created("global", "learned", root)
+    led = ledger.read("global", "learned", root)
     assert len(led) == 1 and led[0]["action"] == "create"
 
 

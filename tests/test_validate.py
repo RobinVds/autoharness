@@ -40,10 +40,9 @@ def test_placeholder_mention_without_colon_passes():
     assert not [f for f in validate.structure(body) if f[0] == "completeness"]
 
 
-def test_global_repo_agnostic_rejected_but_project_ok():
+def test_global_allows_repo_local_identifiers():
     body = "---\nname: foo\ndescription: d\n---\nRun /home/ryan/tigerless_ai/x.py\n"
-    assert "global_repo_agnostic" in _families(validate.validate({**GOOD_INTENT, "level": "global"}, body))
-    assert "global_repo_agnostic" not in _families(validate.validate({**GOOD_INTENT, "level": "project"}, body))
+    assert "global_repo_agnostic" not in _families(validate.validate({**GOOD_INTENT, "level": "global"}, body))
 
 
 def test_self_produced_modify_requires_agent_tag():
@@ -214,11 +213,11 @@ def test_subfile_content_scanned_for_injection():
     assert "safety" in _families(validate.validate(intent, body))
 
 
-def test_global_subfile_repo_local_rejected():
+def test_global_subfile_repo_local_allowed():
     intent = {**GOOD_INTENT, "level": "global",
               "files": {"references/notes.md": "Run /home/ryan/tigerless_ai/x.py\n"}}
     body = GOOD_BODY + "\nSee references/notes.md\n"
-    assert "global_repo_agnostic" in _families(validate.validate(intent, body))
+    assert validate.validate(intent, body)["ok"]
 
 
 # --- remove_file + evidence-slice write/remove deny ---

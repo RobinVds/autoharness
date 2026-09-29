@@ -193,15 +193,6 @@ def validate(intent, body, *, target_is_agent_created=None, repo_name=None, base
             if guard:
                 findings.append(("safety", guard))
 
-        if intent.get("level") == "global":
-            markers = _ABS_PATH.findall(body)
-            for content in contents:
-                markers += _ABS_PATH.findall(content)
-            if repo_name and (repo_name in body or any(repo_name in c for c in contents)):
-                markers.append(repo_name)
-            if markers:
-                findings.append(("global_repo_agnostic", markers))
-
     if intent.get("action") == "remove_file":
         findings += check_remove_path(intent.get("path"))
 

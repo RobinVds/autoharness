@@ -71,14 +71,6 @@ def test_missing_led_rejected(tmp_path):
     assert not skill_store.exists("project", "foo", roots["project"])
 
 
-def test_global_repo_local_rejected(tmp_path):
-    roots = _roots(tmp_path)
-    body = "---\nname: foo\ndescription: d\n---\nRun /home/ryan/tigerless_ai/x.py\n"
-    v = promoter.promote(_create(level="global", body=body), roots=roots)
-    assert not v["ok"] and "global_repo_agnostic" in _families(v)
-    assert not skill_store.exists("global", "foo", roots["global"])
-
-
 def test_placeholder_rejected(tmp_path):
     roots = _roots(tmp_path)
     body = "---\nname: foo\ndescription: d\n---\n# Foo\nTODO: finish.\n"

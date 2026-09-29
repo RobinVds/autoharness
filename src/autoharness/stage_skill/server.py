@@ -7,8 +7,9 @@ front-checks "structure"; the promoter covers "shaping + content + security + la
 the deterministic side does not fully trust the tool surface).
 
 - Schema enforcement: action enum; per-action body|delta|path required-and-mutually-exclusive; LED
-  reason/evidence required; create's level enum (default project; the layer for update/patch/
-  remove_file/delete is resolved by the promoter via a two-layer find).
+  reason/evidence required; create's level is accepted but ignored — this fork always lands new skills in
+  the global layer (~/.claude/skills); the layer for update/patch/remove_file/delete is resolved by the
+  promoter via a two-layer find).
 - Instant feedback on args: create/update run a structure check (frontmatter + name/description, reusing
   validate.structure) + body size, so the model can fix it on the spot within the subagent session
   instead of redoing a whole turn.
@@ -37,7 +38,7 @@ TOOL_SCHEMA = {
                                   "remove_file=drop one subfile / delete=remove the whole skill"},
         "name": {"type": "string", "description": "skill symbol name"},
         "level": {"type": "string", "enum": list(layer.LAYERS),
-                  "description": "create only; defaults to project, global has a high bar"},
+                  "description": "create only; ignored — new skills always land in the global layer"},
         "body": {"type": "string", "description": "create/update: full SKILL.md text"},
         "old_string": {"type": "string", "description": "patch: text to replace (must match the live copy uniquely)"},
         "new_string": {"type": "string", "description": "patch: replacement text"},
@@ -141,7 +142,7 @@ def _intent(params):
     intent = {"action": action, "name": params["name"],
               "reason": params["reason"], "evidence": params["evidence"]}
     if action == "create":
-        intent["level"] = params.get("level", layer.PROJECT)
+        intent["level"] = layer.GLOBAL
     if action in _BODY_ACTIONS:
         intent["body"] = params["body"]
         if params.get("files"):

@@ -32,14 +32,16 @@ def test_create_appends_and_no_tree_write(tmp_path):
     v = server.stage(_params(), run_id=RUN, root=tmp_path)
     assert v["ok"], v["errors"]
     got = _queue(tmp_path)
-    assert got == [{"action": "create", "name": "foo", "level": "project",
+    assert got == [{"action": "create", "name": "foo", "level": "global",
                     "body": GOOD_BODY, "reason": "captured repeat", "evidence": "led slice"}]
     assert not layer.skills_dir("project", tmp_path).exists()  # tool cannot touch the skill tree
 
 
-def test_default_level_project(tmp_path):
-    v = server.stage(_params(), run_id=RUN, root=tmp_path)
-    assert v["ok"] and _queue(tmp_path)[0]["level"] == "project"
+def test_create_always_lands_global(tmp_path):
+    for params in (_params(), {**_params(), "level": "project"}):
+        v = server.stage(params, run_id=RUN, root=tmp_path)
+        assert v["ok"]
+    assert [intent["level"] for intent in _queue(tmp_path)] == ["global", "global"]
 
 
 def test_explicit_global_level(tmp_path):
